@@ -18,7 +18,7 @@ namespace ConsoleApp2
 
             SqlConnection ConexionSQL = new SqlConnection(SQL);
 
-            using (SqlCommand SqlCommand = new SqlCommand("", ConexionSQL))
+            using (SqlCommand SqlCommand = new SqlCommand("Select Id, Tag From Historico", ConexionSQL))
             {
 
                 try
