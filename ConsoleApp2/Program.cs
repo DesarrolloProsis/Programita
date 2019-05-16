@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ namespace ConsoleApp2
 {
     class Program
     {
+
         static void Main(string[] args)
         {
 
@@ -18,7 +20,7 @@ namespace ConsoleApp2
 
             SqlConnection ConexionSQL = new SqlConnection(SQL);
 
-            using (SqlCommand SqlCommand = new SqlCommand("Select Id, Tag From Historico", ConexionSQL))
+            using (SqlCommand SqlCommand = new SqlCommand("Select Tag From Historico group by Tag", ConexionSQL))
             {
 
                 try
@@ -34,8 +36,7 @@ namespace ConsoleApp2
                     foreach(DataRow item in table.Rows)
                     {
                         Lista1.Add(new Primero
-                        {
-                            Id = Convert.ToInt64(item["Id"]),
+                        {                            
                             Tag = Convert.ToString(item["Tag"])
 
                         });
@@ -55,15 +56,13 @@ namespace ConsoleApp2
                         if (table2.Rows.Count != 0)
                         {
 
-
-
                             if (table2.Rows[0]["TypeCuenta"].ToString() == "Individual")
                             {
 
                                 SqlCommand.CommandText = "Select Sum(CAST(Monto as float)) from OperacionesCajeroes where Numero = '" + item2.Tag + "'";
                                 double SaldoTotal = Convert.ToDouble(SqlCommand.ExecuteScalar());
 
-                                SqlCommand.CommandText = "Select Id, Saldo, SaldoAnterior, SaldoActualizado from Historico where Tag = '" + item2.Tag +"'";
+                                SqlCommand.CommandText = "Select Id, Saldo, Tag, SaldoAnterior, SaldoActualizado from Historico where Tag = '" + item2.Tag +"'";
 
                                 SqlCommand.ExecuteNonQuery();
                                 SqlDataAdapter sqlData3 = new SqlDataAdapter(SqlCommand);
@@ -92,13 +91,14 @@ namespace ConsoleApp2
                                         SqlCommand.CommandText = "update Historico set SaldoAnterior = '" + Convert.ToString(SaldoTotal) + "' where Id = '" + item4.Id + "'";
                                         SqlCommand.ExecuteNonQuery();
                                         SaldoTotal = SaldoTotal - item4.Saldo;
-                                        SqlCommand.CommandText = "update Historico set SaldoAnterior = '" + Convert.ToString(SaldoTotal) + "' where Id = '" + item4.Id + "'";
+                                        SqlCommand.CommandText = "update Historico set SaldoActualizado = '" + Convert.ToString(SaldoTotal) + "' where Id = '" + item4.Id + "'";
+                                        SqlCommand.ExecuteNonQuery();
                                     }                                    
 
 
                                 }
-                              
 
+                                
 
                             }
                             else
@@ -109,7 +109,7 @@ namespace ConsoleApp2
                                 SqlCommand.CommandText = "Select Sum(CAST(Monto as float)) from OperacionesCajeroes where Numero = '"+Cuenta+"'";
                                 double SaldoTotal = Convert.ToDouble(SqlCommand.ExecuteScalar());
 
-                                SqlCommand.CommandText = "Select h.Id,, h.Tag, h.Saldo, h.SaldoAnterior, SaldoActualizado from Tags t inner join Historico h on t.NumTag = h.Tag where t.CuentaId = '" + CuentaID + "'";
+                                SqlCommand.CommandText = "Select h.Id, h.Tag, h.Saldo, h.SaldoAnterior, h.SaldoActualizado from Tags t inner join Historico h on t.NumTag = h.Tag where t.CuentaId = '" + CuentaID + "'";
 
                                 SqlCommand.ExecuteNonQuery();
                                 SqlDataAdapter sqlData4 = new SqlDataAdapter(SqlCommand);
@@ -138,11 +138,14 @@ namespace ConsoleApp2
                                         SqlCommand.CommandText = "update Historico set SaldoAnterior = '" + Convert.ToString(SaldoTotal) + "' where Id = '" + item6.Id + "'";
                                         SqlCommand.ExecuteNonQuery();
                                         SaldoTotal = SaldoTotal - item6.Saldo;
-                                        SqlCommand.CommandText = "update Historico set SaldoAnterior = '" + Convert.ToString(SaldoTotal) + "' where Id = '" + item6.Id + "'";
+                                        SqlCommand.CommandText = "update Historico set SaldoActualizado = '" + Convert.ToString(SaldoTotal) + "' where Id = '" + item6.Id + "'";
+                                        SqlCommand.ExecuteNonQuery();
                                     }
 
 
                                 }
+
+                             
 
                             }
 
@@ -154,7 +157,16 @@ namespace ConsoleApp2
                 }
                 catch(Exception ex)
                 {
-
+                    string path = @"C:\DescuentosListas\";
+                    string archivo = "Programita.txt";
+                    using (StreamWriter file = new StreamWriter(path + archivo, true))
+                    {
+                        file.WriteLine(ex.Message);
+                        file.WriteLine("\nStackTrace ---\n{0}", ex.StackTrace);
+                        file.WriteLine(" //se agrega información al documento");
+                        file.Dispose();
+                        file.Close();
+                    }
                 }
 
                 ConexionSQL.Close();

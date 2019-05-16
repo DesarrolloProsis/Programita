@@ -10,7 +10,7 @@ namespace ConsoleApp2
     {
         public class Primero
         {
-            public long Id { get; set; }
+            
             public string Tag { get; set; }
         }
 
